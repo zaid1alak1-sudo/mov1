@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install ffmpeg
-          pip3 install gdown
+          pip3 install gdown --break-system-packages
           ffmpeg -version | head -1
 
       - name: Download and extract WebM files
