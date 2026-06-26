@@ -6,10 +6,6 @@ on:
       drive_url:
         description: 'رابط ملف ZIP على Google Drive (مثال: https://drive.google.com/file/d/FILE_ID/view)'
         required: true
-      batch_name:
-        description: 'اسم الـ batch (مثال: webm_batch01) — يُستخدم في اسم الـ artifact'
-        required: true
-        default: 'webm_batch01'
 
 jobs:
   convert:
@@ -29,9 +25,7 @@ jobs:
         env:
           DRIVE_URL: ${{ github.event.inputs.drive_url }}
         run: |
-          ZIP_NAME="${{ github.event.inputs.batch_name }}.zip"
-
-          echo "⬇️ تنزيل $ZIP_NAME من Google Drive..."
+          echo "⬇️ تنزيل الملف من Google Drive..."
           cat > /tmp/extract_id.py << 'PYEOF'
           import re, sys, os
           url = os.environ["DRIVE_URL"]
@@ -45,11 +39,12 @@ jobs:
           PYEOF
           FILE_ID=$(python3 /tmp/extract_id.py)
           echo "📎 FILE_ID: $FILE_ID"
-          gdown "$FILE_ID" -O "$ZIP_NAME"
+          echo "FILE_ID=$FILE_ID" >> $GITHUB_ENV
+          gdown "$FILE_ID" -O input.zip
 
           echo "📦 فك الضغط..."
           mkdir -p webm_3
-          unzip "$ZIP_NAME" -d webm_3
+          unzip input.zip -d webm_3
           echo "📂 ملفات WebM:"
           find webm_3 -name "*.webm" | wc -l
           du -sh webm_3/
@@ -62,6 +57,6 @@ jobs:
       - name: Upload result as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mov_${{ github.event.inputs.batch_name }}
+          name: mov_${{ env.FILE_ID }}
           path: mov_output/
           retention-days: 7
